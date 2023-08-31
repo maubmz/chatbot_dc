@@ -1,9 +1,7 @@
 import mysql.connector
 
-from Entidades.MysqlConnection import Mysql_Connection
 from Entidades.Reservacion import Reservacion
 from Entidades.Cliente import Cliente
-from Entidades.entidad_openAi import OpenAI
 
 # Ingresamos los datos del mysql para su conexion con python
 

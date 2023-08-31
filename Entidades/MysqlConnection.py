@@ -1,16 +1,12 @@
 import mysql.connector
 import environ
 
-env = environ.Env()
-environ.Env().read_env()
-
-
-class Mysql_Connection:
+def conexion_mysql():
     connection = mysql.connector.connect(
         host='localhost',
         port=3306,
         user='root',
-        password=env('M1x_2021'),
-        database=env('cliente')
+        password='M1x_2021',
+        database='cliente'
     )
-    cursor = connection.cursor()
+    return connection

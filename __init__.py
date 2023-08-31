@@ -1,41 +1,82 @@
-from Entidades.MysqlConnection import Mysql_Connection
-from Entidades.entidad_openAi import OpenAI_Entidad
-from Entidades.Reservacion import Reservacion
+import mysql.connector
 
-connection_mysql = Mysql_Connection()
-connection = connection_mysql.connection
-cursor = connection_mysql.connection.cursor()
+from Entidades.Cliente import Cliente
+from mensajesOpenAi.asistencia_openAi import Asistencia_OpenAi
+from metodos.Metodo_Openai import OpenAI_Entidad
+from Entidades.Reservacion import Reservacion
+from metodos.metodo_cliente import encontrar_datos_cliente
+from metodos.metodo_fecha_reservacion import encontrar_fecha
+from metodos.metodo_numeropersonas import encontrar_numero_personas
 
 open_ai = OpenAI_Entidad()
-reservacion = Reservacion()
-mensaje_bienvenida = f''' 
-            ¡Hola! ¡Bienvenido al restaurante ! Estoy aquí para ayudarte con cualquier pregunta que tengas sobre 
-            nuestro menú, horarios, reservas o cualquier otra información relacionada con nuestro restaurante. ¿En qué puedo ayudarte hoy?'''
-mensaje_reservacion = f'''Restaurante: Me podrias decir en que horario seria y para cuantas personas? '''
+mensajes_ia = Asistencia_OpenAi()
+
+connection = mysql.connector.connect(
+    host='localhost',
+    port=3306,
+    user='root',
+    password='M1x_2021',
+    database='cliente'
+)
 
 # Si se conecto a la BD
 if connection.is_connected():
-    print("Se conecto")
-bienvenida = "Hola"
+    print("Conexion exitosa")
+cursor = connection.cursor()
 
 while True:
     # Mensaje de bienvenida
-    print(open_ai.uso_open_AI(bienvenida, mensaje_bienvenida))
+    print(open_ai.uso_open_AI(mensajes_ia.s_bienvenida, mensajes_ia.i_bienvenida, mensajes_ia.a_bienvenida))
     input_usuario = input().lower()
 
     # Si el usuario escribe salir se cierra el programa
     if input_usuario == "salir":
         break
 
-    # Imprime el mensaje de que quiere hacer una reservacion
-    #    print(open_ai.uso_open_AI(input_usuario, mensaje_reservacion))
-
-    # Debe de darnos los datos de la reservacion
-    print("datos")
+    # Hacer la reservacion
+    print(open_ai.uso_open_AI(mensajes_ia.s_reservacion, mensajes_ia.i_reservacion, mensajes_ia.a_reservacion))
     input_usuario = input().lower()
-    print(reservacion.get_hora())
+    dia, mes, hora = encontrar_fecha(input_usuario)
 
+    # Ingresar el numero de personas de la reservacion
+    # checar
+    print(open_ai.uso_open_AI(mensajes_ia.s_personas, mensajes_ia.i_personas, mensajes_ia.a_personas))
+    no_personas = input()
+    no_personas = encontrar_numero_personas(no_personas)
 
-    print(reservacion.get_mes())
+    # Verificacion si existe la reservacion
+    print("verificando")
+    reservacion = Reservacion(dia, mes, hora, no_personas)
+    cursor.execute(reservacion.id_reservacion())
+    disponibilidad = cursor.fetchone()
 
+    # Si la reservacion no se puede hacer no lo inserta pero, si se puede hacer pide los datos del cliente
+    if disponibilidad:
+        print("No tenemos mesa disponible, lo siento")
+    else:
+        # Mensaje de verificacion
+        print("Hay disponibilidad!")
 
+        # Inserta la reservacion y pide los datos para insertar el nombre del cliente
+        print(open_ai.uso_open_AI(mensajes_ia.s_cliente, mensajes_ia.i_cliente, mensajes_ia.a_cliente))
+        input_cliente = input()
+        cursor.execute(reservacion.insercion_reservacion())
+        connection.commit()
+        cursor.execute(reservacion.id_reservacion())
+        id_reservacion = cursor.fetchone()[0]
+        nombre, apellido = encontrar_datos_cliente(input_cliente)
+
+        # Pide el correo al usuario
+        print(open_ai.uso_open_AI(mensajes_ia.s_correo, mensajes_ia.i_correo, mensajes_ia.a_correo))
+        correo = input().lower()
+        cliente = Cliente(nombre, apellido, correo, id_reservacion)
+        cursor.execute(cliente.insercion_cliente())
+        connection.commit()
+        print(f"Se ha realizado con exito la reservacion para el dia {dia} del {mes} a las {hora} " +
+              f"a nombre de {nombre} {apellido}")
+
+    # Si no se pudo pregunta si quiere ingresar otra fecha?
+    print("quieres salir o probar con otra fecha?")
+    input_usuario = input().lower()
+    if input_usuario == "salir":
+        break
