@@ -6,14 +6,14 @@ from nltk.chunk import ne_chunk
 def encontrar_datos_cliente(texto_ususario):
     # Tokenizar el texto en palabras y etiquetar las palabras
     tokens = word_tokenize(texto_ususario)
-    tagged_tokens = pos_tag(tokens)
+    tokens_etiquetados = pos_tag(tokens)
 
     # Identificar entidades nombradas utilizando chunking
-    named_entities = ne_chunk(tagged_tokens)
+    nombre_entidades = ne_chunk(tokens_etiquetados)
 
     # Filtrar las entidades nombradas identificadas como "PERSON" y "DATE"
     personas = []
-    for entity in named_entities:
+    for entity in nombre_entidades:
         if isinstance(entity, nltk.Tree):
             if entity.label() == 'PERSON':
                 persona = ' '.join([token for token, _ in entity.leaves()])
