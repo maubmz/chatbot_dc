@@ -1,4 +1,5 @@
 class Cliente:
+
     def __init__(self, nombre, apellido, correo, id_reservacion):
         self.__nombre = nombre
         self.__apellido = apellido

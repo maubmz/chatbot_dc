@@ -1,6 +1,3 @@
-from msilib.schema import Property
-
-
 class Reservacion:
 
     def __init__(self, dia, mes, hora, no_personas):
@@ -8,9 +5,6 @@ class Reservacion:
         self.__mes = mes
         self.__hora = hora
         self.__no_personas = no_personas
-
-    def print_reservacion(self):
-        return f"Impresion de la reservacion {self.__dia}, el mes {self.__mes}, a las {self.__hora} con {self.__no_personas}"
 
     # La funcion hace una consulta a la base de datos que nos tendra que regresar el id de la reservacion
     def id_reservacion(self):

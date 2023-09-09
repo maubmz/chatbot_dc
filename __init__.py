@@ -1,14 +1,13 @@
 import mysql.connector
 
-from Entidades.Cliente import Cliente
+from Objetos.Cliente import Cliente
 from mensajesOpenAi.asistencia_openAi import Asistencia_OpenAi
-from metodos.Metodo_Openai import OpenAI_Entidad
-from Entidades.Reservacion import Reservacion
+from Objetos.Reservacion import Reservacion
+from metodos.Metodo_Openai import genera_mensajes
 from metodos.metodo_cliente import encontrar_datos_cliente
 from metodos.metodo_fecha_reservacion import encontrar_fecha
 from metodos.metodo_numeropersonas import encontrar_numero_personas
 
-open_ai = OpenAI_Entidad()
 mensajes_ia = Asistencia_OpenAi()
 
 connection = mysql.connector.connect(
@@ -26,7 +25,7 @@ cursor = connection.cursor()
 
 while True:
     # Mensaje de bienvenida
-    print(open_ai.uso_open_AI(mensajes_ia.s_bienvenida, mensajes_ia.u_bienvenida, mensajes_ia.a_bienvenida))
+    print(genera_mensajes(mensajes_ia.s_bienvenida, mensajes_ia.u_bienvenida, mensajes_ia.a_bienvenida))
     input_usuario = input().lower()
 
     # Si el usuario escribe salir se cierra el programa
@@ -34,13 +33,12 @@ while True:
         break
 
     # Hacer la reservacion
-    print(open_ai.uso_open_AI(mensajes_ia.s_reservacion, mensajes_ia.u_reservacion, mensajes_ia.a_reservacion))
+    print(genera_mensajes(mensajes_ia.s_reservacion, mensajes_ia.u_reservacion, mensajes_ia.a_reservacion))
     input_usuario = input().lower()
     dia, mes, hora = encontrar_fecha(input_usuario)
 
     # Ingresar el numero de personas de la reservacion
-    # checar
-    print(open_ai.uso_open_AI(mensajes_ia.s_personas, mensajes_ia.u_personas, mensajes_ia.a_personas))
+    print(genera_mensajes(mensajes_ia.s_personas, mensajes_ia.u_personas, mensajes_ia.a_personas))
     no_personas = input()
     no_personas = encontrar_numero_personas(no_personas)
 
@@ -58,7 +56,7 @@ while True:
         print("Hay disponibilidad!")
 
         # Inserta la reservacion y pide los datos para insertar el nombre del cliente
-        print(open_ai.uso_open_AI(mensajes_ia.s_cliente, mensajes_ia.u_cliente, mensajes_ia.a_cliente))
+        print(genera_mensajes(mensajes_ia.s_cliente, mensajes_ia.u_cliente, mensajes_ia.a_cliente))
         input_cliente = input()
         cursor.execute(reservacion.insercion_reservacion())
         connection.commit()
@@ -67,7 +65,7 @@ while True:
         nombre, apellido = encontrar_datos_cliente(input_cliente)
 
         # Pide el correo al usuario
-        print(open_ai.uso_open_AI(mensajes_ia.s_correo, mensajes_ia.u_correo, mensajes_ia.a_correo))
+        print(genera_mensajes(mensajes_ia.s_correo, mensajes_ia.u_correo, mensajes_ia.a_correo))
         correo = input().lower()
         cliente = Cliente(nombre, apellido, correo, id_reservacion)
         cursor.execute(cliente.insercion_cliente())
