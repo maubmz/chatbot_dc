@@ -18,3 +18,5 @@ class Reservacion:
         consulta = ('''INSERT INTO reservacion(dia, mes, hora, no_personas) VALUES ({},"{}","{}",{})'''
                     .format(self.__dia, self.__mes, self.__hora, self.__no_personas))
         return consulta
+
+

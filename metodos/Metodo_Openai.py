@@ -1,28 +1,27 @@
-import datetime
-
 import openai
 
+from mensajesOpenAi.asistencia_openAi import user_generar, asistente, peticion_sistema
 from mensajesOpenAi.extraccion_info import system, user_1, assistant
 
-# _ = load_dotenv(find_dotenv())
-
 openai.api_key = ""
-peticion_sistema = "Eres un chatbot para el restaurante mexicano "
 
 
-def genera_mensajes(sistema_ayuda, peticion_usuario, asistente):
+# 3 roles dentro del metodo
+# system: funcion que deseamos que realice,
+# user:solicitud del usuario a realizar
+# assistant: ejemplos de la funcion
+def generador_mensajes(sistema_ayuda):
     completion = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": peticion_sistema + sistema_ayuda},
-            {"role": "user", "content": peticion_usuario},
+            {"role": "system", "content": peticion_sistema},
+            {"role": "user", "content": user_generar},
             {"role": "assistant", "content": asistente},
+            {"role": "system", "content": sistema_ayuda},
         ]
     )
     return completion.choices[0].message.content
 
-
-# La respuesta del modelo se divide en 2 lo que dijo el cliente, y nuestra asistencia
 
 def get_datos(final_user):
     completion = openai.ChatCompletion.create(
@@ -35,5 +34,3 @@ def get_datos(final_user):
         ]
     )
     return completion.choices[0].message.content
-
-

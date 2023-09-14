@@ -1,14 +1,11 @@
 import mysql.connector
 
 from Objetos.Cliente import Cliente
-from mensajesOpenAi.asistencia_openAi import Asistencia_OpenAi
+from mensajesOpenAi.asistencia_openAi import s_bienvenida, s_reservacion, s_personas, s_cliente
 from Objetos.Reservacion import Reservacion
-from metodos.Metodo_Openai import genera_mensajes
-from metodos.metodo_cliente import encontrar_datos_cliente
-from metodos.metodo_fecha_reservacion import encontrar_fecha
-from metodos.metodo_numeropersonas import encontrar_numero_personas
-
-mensajes_ia = Asistencia_OpenAi()
+from mensajesOpenAi.extraccion_info import lineas_guia
+from metodos.Metodo_Openai import get_datos, generador_mensajes
+from metodos.texto_A_lista import texto_lista
 
 connection = mysql.connector.connect(
     host='localhost',
@@ -21,26 +18,39 @@ connection = mysql.connector.connect(
 # Si se conecto a la BD
 if connection.is_connected():
     print("Conexion exitosa")
+
 cursor = connection.cursor()
 
 while True:
     # Mensaje de bienvenida
-    print(genera_mensajes(mensajes_ia.s_bienvenida, mensajes_ia.u_bienvenida, mensajes_ia.a_bienvenida))
-    input_usuario = input().lower()
+    print(generador_mensajes(s_bienvenida))
+    input_usuario = input().lower().strip()
 
     # Si el usuario escribe salir se cierra el programa
     if input_usuario == "salir":
         break
 
     # Hacer la reservacion
-    print(genera_mensajes(mensajes_ia.s_reservacion, mensajes_ia.u_reservacion, mensajes_ia.a_reservacion))
+    print(generador_mensajes(s_reservacion))
     input_usuario = input().lower()
-    dia, mes, hora = encontrar_fecha(input_usuario)
+    formato_input = lineas_guia.format(input_usuario)
+    cadena_texto = get_datos(formato_input)
+    lista_texto = texto_lista(cadena_texto)
+    print(lista_texto)
+    dia, mes = lista_texto[0].split(" ")
+    hora = lista_texto[1]
 
     # Ingresar el numero de personas de la reservacion
-    print(genera_mensajes(mensajes_ia.s_personas, mensajes_ia.u_personas, mensajes_ia.a_personas))
-    no_personas = input()
-    no_personas = encontrar_numero_personas(no_personas)
+    print(generador_mensajes(s_personas))
+    no_personas = input().lower()
+    formato_input = lineas_guia.format(no_personas)
+    cadena_texto = get_datos(formato_input)
+    lista_texto = texto_lista(cadena_texto)
+    no_personas = lista_texto[0]
+
+    print("Dia reservacion:" + dia + " Mes reservacion: " + mes + " Hora reservacion: "
+          + hora + " Numero de personas: " + no_personas)
+
 
     # Verificacion si existe la reservacion
     print("verificando")
@@ -54,27 +64,35 @@ while True:
     else:
         # Mensaje de verificacion
         print("Hay disponibilidad!")
-
-        # Inserta la reservacion y pide los datos para insertar el nombre del cliente
-        print(genera_mensajes(mensajes_ia.s_cliente, mensajes_ia.u_cliente, mensajes_ia.a_cliente))
-        input_cliente = input()
         cursor.execute(reservacion.insercion_reservacion())
         connection.commit()
+
         cursor.execute(reservacion.id_reservacion())
         id_reservacion = cursor.fetchone()[0]
-        nombre, apellido = encontrar_datos_cliente(input_cliente)
+        # Inserta la reservacion y pide los datos para insertar el nombre del cliente
+        print(generador_mensajes(s_cliente))
+        input_cliente = input()
+        formato_input = lineas_guia.format(input_cliente)
+        cadena_texto = get_datos(formato_input)
+        lista_texto = texto_lista(cadena_texto)
+        print(lista_texto)
+        nombre, apellido = lista_texto[0].split(" ")
 
-        # Pide el correo al usuario
-        print(genera_mensajes(mensajes_ia.s_correo, mensajes_ia.u_correo, mensajes_ia.a_correo))
-        correo = input().lower()
-        cliente = Cliente(nombre, apellido, correo, id_reservacion)
+        cliente = Cliente(nombre, apellido, id_reservacion)
         cursor.execute(cliente.insercion_cliente())
         connection.commit()
         print(f"Se ha realizado con exito la reservacion para el dia {dia} del {mes} a las {hora} " +
               f"a nombre de {nombre} {apellido}")
 
     # Si no se pudo pregunta si quiere ingresar otra fecha?
-    print("quieres salir o probar con otra fecha?")
-    input_usuario = input().lower()
+    print("Necesitas algo mas o quieres salir?")
+    input_usuario = input().lower().strip()
     if input_usuario == "salir":
         break
+
+
+
+
+
+
+
